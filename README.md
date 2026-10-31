@@ -318,10 +318,11 @@ Git Push → Build/Test (Maven) → Docker Build → Push to Docker Hub (SHA tag
 ```bash
 git add .
 git commit -m "feat: lab8 k8s deployment"
-git push origin main
+git branch -M master
+git push -u origin master
 ```
 
-Open: `https://github.com/202512117/202512117_Lab8_Updated/actions`
+Open: `https://github.com/<your-username>/<repo-name>/actions`
 
 ### Image naming convention
 
@@ -333,6 +334,32 @@ docker.io/<username>/202512117-lab8-order-service:<github.sha>
 ```
 
 Using the **Git commit SHA** as the image tag ensures every image is uniquely traceable to the exact code that produced it.
+
+### Kubernetes Rolling Update / Rollout Procedure
+
+Once the CI/CD pipeline pushes the new SHA-tagged image to Docker Hub, update the running Kubernetes deployment without downtime:
+
+1. **Trigger rolling update to the new versioned image:**
+   ```bash
+   kubectl set image deployment/user-service user-service=<DOCKER_USERNAME>/202512117-lab8-user-service:<GITHUB_SHA> -n lab8
+   ```
+
+2. **Monitor the rollout status in real-time:**
+   ```bash
+   kubectl rollout status deployment/user-service -n lab8
+   # Expected output: deployment "user-service" successfully rolled out
+   ```
+
+3. **Verify the new image is running:**
+   ```bash
+   kubectl get pods -n lab8 -o jsonpath="{..image}"
+   kubectl describe deployment user-service -n lab8 | grep Image
+   ```
+
+4. **Rollback if needed (zero-downtime safety):**
+   ```bash
+   kubectl rollout undo deployment/user-service -n lab8
+   ```
 
 ---
 
