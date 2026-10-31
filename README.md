@@ -318,11 +318,12 @@ Git Push → Build/Test (Maven) → Docker Build → Push to Docker Hub (SHA tag
 ```bash
 git add .
 git commit -m "feat: lab8 k8s deployment"
+git remote add origin https://github.com/Heer117/202512117_Lab8_Updated.git
 git branch -M master
 git push -u origin master
 ```
 
-Open: `https://github.com/<your-username>/<repo-name>/actions`
+Open Actions: `https://github.com/Heer117/202512117_Lab8_Updated/actions`
 
 ### Image naming convention
 
