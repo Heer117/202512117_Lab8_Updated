@@ -1,9 +1,18 @@
-FROM eclipse-temurin:21-jre
-
+﻿# ============================================================
+# Multi-stage Dockerfile
+# Stage 1: Build the JAR with Maven
+# Stage 2: Run with minimal JRE image
+# ============================================================
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
+COPY .mvn/ .mvn/
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
+COPY src/ src/
+RUN ./mvnw package -DskipTests -B
 
-COPY target/*.jar app.jar
-
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
 EXPOSE 3002
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
