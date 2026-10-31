@@ -34,3 +34,8 @@ lab7_extracted.txt
 
 setup-secrets.ps1
 .env
+
+# Assignment PDFs and extracted text
+*.pdf
+lab7_extracted.txt
+lab8_extracted.txt
