@@ -1,0 +1,21 @@
+# ============================================================
+# ORDER SERVICE - ClusterIP (internal only)
+# Access via: http://order-service:3003 (within lab8 namespace)
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: lab8
+  labels:
+    app: order-service
+    app.kubernetes.io/part-of: lab8
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: order-service
+  ports:
+    - name: http
+      port: 3003
+      targetPort: 3003

@@ -1,0 +1,21 @@
+# ============================================================
+# USER SERVICE - ClusterIP (internal only, not exposed outside cluster)
+# Access via: http://user-service:3001 (within lab8 namespace)
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: lab8
+  labels:
+    app: user-service
+    app.kubernetes.io/part-of: lab8
+    app.kubernetes.io/component: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: user-service
+  ports:
+    - name: http
+      port: 3001
+      targetPort: 3001

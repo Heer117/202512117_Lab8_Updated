@@ -1,0 +1,36 @@
+# ============================================================
+# .gitignore — Lab 8 (202512117)
+# ============================================================
+
+# Environment / secrets — NEVER commit
+.env
+*.env.local
+*.env.*.local
+
+# Maven build output
+*/target/
+**/target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+*.iws
+.vscode/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Python (PDF extraction scripts)
+__pycache__/
+*.pyc
+lab8_extracted.txt
+lab7_extracted.txt
+
+setup-secrets.ps1
+.env

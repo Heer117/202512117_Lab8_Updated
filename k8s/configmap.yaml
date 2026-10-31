@@ -1,0 +1,19 @@
+# ============================================================
+# CONFIG MAP - Non-sensitive environment configuration
+# Uses Kubernetes internal DNS: http://<service-name>:<port>
+# Short-form DNS works within the same namespace (lab8).
+# kubectl apply -f k8s/configmap.yaml
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab8-config
+  namespace: lab8
+  labels:
+    app.kubernetes.io/part-of: lab8
+data:
+  # Internal Kubernetes DNS names for service-to-service communication
+  # These resolve within the lab8 namespace without hard-coded IPs
+  USER_SERVICE_URL: "http://user-service:3001"
+  PRODUCT_SERVICE_URL: "http://product-service:3002"
+  ORDER_SERVICE_URL: "http://order-service:3003"

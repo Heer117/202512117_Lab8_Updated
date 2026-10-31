@@ -1,0 +1,72 @@
+# ============================================================
+# ORDER SERVICE DEPLOYMENT
+# Needs MONGO_URI (Secret) + service URLs (ConfigMap) because
+# Order Service calls User & Product services internally.
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: lab8
+  labels:
+    app: order-service
+    app.kubernetes.io/part-of: lab8
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+        app.kubernetes.io/part-of: lab8
+    spec:
+      containers:
+        - name: order-service
+          image: 202512117_lab8/order-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3003
+              name: http
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: lab8-mongodb-secret
+                  key: MONGO_URI_ORDER
+            # Order service calls User and Product services
+            - name: USER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: lab8-config
+                  key: USER_SERVICE_URL
+            - name: PRODUCT_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: lab8-config
+                  key: PRODUCT_SERVICE_URL
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 3003
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            failureThreshold: 3
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 3003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

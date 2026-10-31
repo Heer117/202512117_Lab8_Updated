@@ -1,0 +1,149 @@
+# ============================================================
+# Lab 8 — Docker Compose (local dev / screenshot capture)
+# WSSOA | Student ID: 202512117
+#
+# Starts all 4 Spring Boot services + Prometheus + Grafana
+# MongoDB Atlas is used as external DB (no local Mongo needed)
+#
+# Usage:
+#   docker-compose up --build
+#   Wait ~60s for Spring Boot services to initialize
+#   Gateway: http://localhost:3000
+#   Prometheus: http://localhost:9090
+#   Grafana: http://localhost:3005 (admin/admin)
+#
+# Stop:
+#   docker-compose down
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # User Service  (Port 3001)
+  # ----------------------------------------------------------
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    image: 202512117_lab8/user-service:latest
+    ports:
+      - "3001:3001"
+    environment:
+      MONGO_URI: ${MONGO_URI_USER}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ----------------------------------------------------------
+  # Product Service  (Port 3002)
+  # ----------------------------------------------------------
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    image: 202512117_lab8/product-service:latest
+    ports:
+      - "3002:3002"
+    environment:
+      MONGO_URI: ${MONGO_URI_PRODUCT}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ----------------------------------------------------------
+  # Order Service  (Port 3003)
+  # ----------------------------------------------------------
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    image: 202512117_lab8/order-service:latest
+    ports:
+      - "3003:3003"
+    environment:
+      MONGO_URI: ${MONGO_URI_ORDER}
+      USER_SERVICE_URL: http://user-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3002
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ----------------------------------------------------------
+  # API Gateway  (Port 3000 — external entry point)
+  # ----------------------------------------------------------
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    image: 202512117_lab8/api-gateway:latest
+    ports:
+      - "3000:3000"
+    environment:
+      USER_SERVICE_URL: http://user-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3002
+      ORDER_SERVICE_URL: http://order-service:3003
+    depends_on:
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+
+  # ----------------------------------------------------------
+  # Prometheus  (Port 9090)
+  # ----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ----------------------------------------------------------
+  # Grafana  (Port 3005 — avoid conflict with services)
+  # Default credentials: admin / admin
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3005:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:

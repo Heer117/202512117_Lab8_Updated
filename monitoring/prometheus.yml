@@ -1,0 +1,68 @@
+# ============================================================
+# Prometheus Configuration — Lab 8
+# WSSOA | Student ID: 202512117
+#
+# Scrapes metrics from all 4 Spring Boot services via the
+# Micrometer Prometheus endpoint: /actuator/prometheus
+#
+# When running with Docker Compose (local dev):
+#   targets use 'host.docker.internal:<port>'
+#
+# When running in Kubernetes:
+#   configure using ServiceMonitor (if Prometheus Operator)
+#   or use K8s DNS names + port-forwarding for local scraping.
+#
+# Usage (Docker - local dev):
+#   docker run -p 9090:9090 \
+#     -v $(pwd)/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml \
+#     --add-host=host.docker.internal:host-gateway \
+#     prom/prometheus
+# ============================================================
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    lab: lab8
+    student: '202512117'
+
+scrape_configs:
+
+  # ----------------------------------------------------------
+  # API Gateway — port 3000
+  # ----------------------------------------------------------
+  - job_name: api-gateway
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'host.docker.internal:3000' ]
+        labels:
+          service: api-gateway
+
+  # ----------------------------------------------------------
+  # User Service — port 3001
+  # ----------------------------------------------------------
+  - job_name: user-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'host.docker.internal:3001' ]
+        labels:
+          service: user-service
+
+  # ----------------------------------------------------------
+  # Product Service — port 3002
+  # ----------------------------------------------------------
+  - job_name: product-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'host.docker.internal:3002' ]
+        labels:
+          service: product-service
+
+  # ----------------------------------------------------------
+  # Order Service — port 3003
+  # ----------------------------------------------------------
+  - job_name: order-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'host.docker.internal:3003' ]
+        labels:
+          service: order-service

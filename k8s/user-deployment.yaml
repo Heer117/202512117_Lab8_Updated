@@ -1,0 +1,61 @@
+# ============================================================
+# USER SERVICE DEPLOYMENT
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: lab8
+  labels:
+    app: user-service
+    app.kubernetes.io/part-of: lab8
+    app.kubernetes.io/component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+        app.kubernetes.io/part-of: lab8
+    spec:
+      containers:
+        - name: user-service
+          image: 202512117_lab8/user-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3001
+              name: http
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: lab8-mongodb-secret
+                  key: MONGO_URI_USER
+          # Liveness probe: restarts container if health check fails
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 3001
+            initialDelaySeconds: 45
+            periodSeconds: 20
+            failureThreshold: 3
+            timeoutSeconds: 5
+          # Readiness probe: ensures pod only gets traffic when ready
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
